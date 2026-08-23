@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'Rico Scripts'
 description 'Uitgebreid beheer voor spelerwinkels en tankstations'
-version '1.1.2'
+version '1.2.0'
 
 sql_file 'sql/install.sql'
 rs_sql 'sql/install.sql'
@@ -49,7 +49,8 @@ dependencies {
     'ox_lib',
     'oxmysql',
     'ox_inventory',
-    'ox_target'
+    'ox_target',
+    'rs-shops'
 }
 
 escrow_ignore {

@@ -53,6 +53,28 @@ function RSRepo.publicList()
     return result
 end
 
+local function locationSold(coords, maxDistance)
+    if not Config.RsShopsIntegration or not Config.RsShopsIntegration.enabled then return false end
+    if not coords then return false end
+
+    local x, y, z = tonumber(coords.x), tonumber(coords.y), tonumber(coords.z)
+    if not x or not y or not z then return false end
+    local maximum = tonumber(maxDistance) or Config.RsShopsIntegration.matchDistance or 30.0
+
+    for _, business in pairs(RSRepo.businesses) do
+        local target = business.owner_identifier and business.coords
+        if target then
+            local dx, dy, dz = x - target.x, y - target.y, z - target.z
+            if (dx * dx + dy * dy + dz * dz) <= maximum * maximum then
+                return true, business.id
+            end
+        end
+    end
+    return false
+end
+
+exports('IsLocationSold', locationSold)
+
 function RSRepo.update(id, values)
     local business = RSRepo.get(id)
     if not business then return false end

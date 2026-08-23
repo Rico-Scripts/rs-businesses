@@ -27,6 +27,10 @@ end
 RSClient.openBusiness = openBusiness
 RSClient.notify = notify
 
+exports('GetBusinesses', function()
+    return businesses
+end)
+
 local function clearWorld()
     for _, ped in pairs(spawnedPeds) do if DoesEntityExist(ped) then DeleteEntity(ped) end end
     for _, blip in pairs(blips) do if DoesBlipExist(blip) then RemoveBlip(blip) end end
@@ -56,6 +60,7 @@ RegisterNetEvent('rs-businesses:client:sync', function(list)
     RSClient.businesses = businesses
     buildBlips()
     if RSClient.refreshMainNpcs then RSClient.refreshMainNpcs() end
+    TriggerEvent('rs-businesses:client:locationsReady', businesses)
 end)
 
 CreateThread(function()
@@ -63,6 +68,7 @@ CreateThread(function()
     RSClient.businesses = businesses
     buildBlips()
     if RSClient.refreshMainNpcs then RSClient.refreshMainNpcs() end
+    TriggerEvent('rs-businesses:client:locationsReady', businesses)
 end)
 
 CreateThread(function()

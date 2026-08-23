@@ -22,6 +22,7 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 - Rolgebonden werksets voor vakkenvuller, manager en beveiliger met gecontroleerde tijdelijke props
 - Bedrijfsupgrades voor opslag, brandstof en logistiek
 - Dynamische NPC's en blips
+- Automatische overname van `rs-shops`-locaties: oude blip en winkelinteractie verdwijnen na verkoop
 - Logging via `rs_discordlogs` met webhookfallback
 - Nederlandse interface in RS-huisstijl
 - Server-side afstands-, geld-, voorraad- en rechtencontrole
@@ -33,6 +34,7 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 - `oxmysql`
 - `ox_inventory`
 - `ox_target`
+- `rs-shops`
 - `rs_discordlogs` wordt aanbevolen
 
 ## Installatie
@@ -43,6 +45,7 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 4. Voeg na de dependencies toe:
 
 ```cfg
+ensure rs-shops
 ensure rs-businesses
 ```
 
@@ -62,6 +65,8 @@ Open `/businesscreator` en kies **NPC-werkroutes**. Ga op een werkpunt staan in 
 ## Configuratie
 
 Alle economische waarden, producten, NPC-rollen, upgrades, pompmodellen en logging staan in `config.lua`.
+
+De koppeling met `rs-shops` gebruikt de locatiecoördinaten. Stel de herkenningsafstand indien nodig bij via `Config.RsShopsIntegration.matchDistance`. `rs-shops` is bewust een dependency en moet dus vóór `rs-businesses` starten.
 
 Voor automatische Discord-logging moet `rs_discordlogs` vóór deze resource starten. Zonder die resource kan in `Config.Logging.webhook` een fallbackwebhook worden ingevuld.
 

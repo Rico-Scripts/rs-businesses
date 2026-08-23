@@ -11,6 +11,11 @@ Config.SaveFuelEveryMs = 15000
 Config.BusinessTickMinutes = 15
 Config.MaxTransactionsPerRequest = 100
 
+Config.RsShopsIntegration = {
+    enabled = true,
+    matchDistance = 30.0
+}
+
 Config.Brand = {
     name = 'Rico Scripts',
     shortName = 'RS',
