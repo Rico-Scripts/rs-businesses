@@ -2,6 +2,34 @@ local mainPeds, workerPeds = {}, {}
 local workerGeneration = 0
 local cashierBusinesses = {}
 
+local customWorkAnimations = {
+    RS_CASH_REGISTER = {
+        dict = 'mp_am_hold_up',
+        clip = 'purchase_beerbox_shopkeeper',
+        flag = 1
+    }
+}
+
+local looseWorkProps = {
+    'p_amb_clipboard_01',
+    'prop_notepad_01',
+    'prop_pencil_01'
+}
+
+local function cleanupLooseWorkProps(coords)
+    for i = 1, #looseWorkProps do
+        local model = joaat(looseWorkProps[i])
+        for _ = 1, 12 do
+            local object = GetClosestObjectOfType(coords.x, coords.y, coords.z, 2.5, model, false, false, false)
+            if not object or object == 0 then break end
+            SetEntityAsMissionEntity(object, true, true)
+            DeleteObject(object)
+            if DoesEntityExist(object) then DeleteEntity(object) end
+            Wait(0)
+        end
+    end
+end
+
 local function loadModel(model)
     local hash = type(model) == 'number' and model or joaat(model)
     if not IsModelInCdimage(hash) or not IsModelValid(hash) then return nil end
@@ -64,14 +92,24 @@ local function waitAtWorkpoint(ped, point, generation)
     local coords = point.coords
     SetEntityHeading(ped, (coords.w or GetEntityHeading(ped)) + 0.0)
     ClearPedTasks(ped)
-    TaskStartScenarioInPlace(ped, point.scenario, 0, true)
     local duration = tonumber(point.duration_ms) or Config.NpcAI.workDurationMs
+    local animation = customWorkAnimations[point.scenario]
+    if animation then
+        cleanupLooseWorkProps(coords)
+        lib.requestAnimDict(animation.dict, 10000)
+        TaskPlayAnim(ped, animation.dict, animation.clip, 3.0, 3.0, duration, animation.flag, 0.0, false, false, false)
+    else
+        TaskStartScenarioInPlace(ped, point.scenario, 0, true)
+    end
     local elapsed = 0
     while elapsed < duration and DoesEntityExist(ped) and generation == workerGeneration do
         Wait(500)
         elapsed = elapsed + 500
     end
-    if DoesEntityExist(ped) then ClearPedTasks(ped) end
+    if DoesEntityExist(ped) then
+        ClearPedTasks(ped)
+        if animation then RemoveAnimDict(animation.dict) end
+    end
 end
 
 local function walkToWorkpoint(ped, point, generation)
@@ -101,7 +139,8 @@ end
 local function fallbackWork(ped, worker, generation)
     local home = worker.coords
     if worker.role == 'cashier' then
-        waitAtWorkpoint(ped, { coords = home, scenario = Config.NpcAI.scenarios.cashier[1], duration_ms = Config.NpcAI.workDurationMs }, generation)
+        cleanupLooseWorkProps(home)
+        waitAtWorkpoint(ped, { coords = home, scenario = 'RS_CASH_REGISTER', duration_ms = Config.NpcAI.workDurationMs }, generation)
         return
     end
     ClearPedTasks(ped)
@@ -172,6 +211,7 @@ local function refreshWorkers()
         }}, true)
         if ped then
             workerPeds[worker.id] = ped
+            if worker.role == 'cashier' then cleanupLooseWorkProps(worker.coords) end
             startWorkerAI(ped, worker, generation)
         end
     end
