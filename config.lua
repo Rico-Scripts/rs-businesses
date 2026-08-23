@@ -58,7 +58,7 @@ Config.NpcAI = {
     disableOutsideOpeningHours = false,
     scenarios = {
         cashier = {
-            'WORLD_HUMAN_CLIPBOARD',
+            'RS_CASH_REGISTER',
             'WORLD_HUMAN_STAND_IMPATIENT_UPRIGHT',
             'PROP_HUMAN_ATM'
         },
