@@ -18,6 +18,7 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 - Werkende NPC-AI met navmesh-routes, kassawerk, vakkenvullen, managementrondes en beveiligingspatrouilles
 - In-game werkpunteneditor met animatie, kijkrichting, werkduur en automatische routevolgorde
 - Automatische stuck-recovery en vervanging van de standaard kassier door een aangenomen kassamedewerker
+- Eigen kassa-animatie zonder achtergelaten clipboard-props, inclusief automatische opruiming van oude props
 - Bedrijfsupgrades voor opslag, brandstof en logistiek
 - Dynamische NPC's en blips
 - Logging via `rs_discordlogs` met webhookfallback
