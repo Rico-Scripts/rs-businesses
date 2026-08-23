@@ -11,6 +11,59 @@ lib.callback.register('rs-businesses:server:adminList', function(source)
     return RSRepo.publicList()
 end)
 
+lib.callback.register('rs-businesses:server:adminWorkpoints', function(source)
+    if not isAdmin(source) then return nil end
+    local rows = MySQL.query.await([[
+        SELECT w.id, w.business_id, w.role, w.sequence, w.label, w.coords, w.scenario, w.duration_ms,
+               b.name business_name
+        FROM rs_business_workpoints w
+        INNER JOIN rs_businesses b ON b.id = w.business_id
+        ORDER BY b.name, w.role, w.sequence
+    ]]) or {}
+    for i = 1, #rows do
+        rows[i].coords = RSBusiness.decode(rows[i].coords)
+        rows[i].duration_ms = tonumber(rows[i].duration_ms) or Config.NpcAI.workDurationMs
+    end
+    return rows
+end)
+
+local function scenarioAllowed(role, scenario)
+    local available = Config.NpcAI.scenarios[role] or {}
+    for i = 1, #available do if available[i] == scenario then return true end end
+    return false
+end
+
+lib.callback.register('rs-businesses:server:addWorkpoint', function(source, data)
+    if not isAdmin(source) or type(data) ~= 'table' then return false, _L('no_access') end
+    local business = RSRepo.get(data.businessId)
+    local role = tostring(data.role or '')
+    local coords = data.coords
+    if not business or not Config.NpcRoles[role] or type(coords) ~= 'table' or not tonumber(coords.x) then
+        return false, _L('invalid_data')
+    end
+    local scenario = tostring(data.scenario or '')
+    if not scenarioAllowed(role, scenario) then return false, 'Ongeldige werkanimatie.' end
+    local sequence = (MySQL.scalar.await('SELECT COALESCE(MAX(sequence), 0) + 1 FROM rs_business_workpoints WHERE business_id = ? AND role = ?', { business.id, role }) or 1)
+    local id = MySQL.insert.await([[
+        INSERT INTO rs_business_workpoints (business_id, role, sequence, label, coords, scenario, duration_ms)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ]], {
+        business.id, role, sequence, RSBusiness.sanitizeText(data.label ~= '' and data.label or ('Werkpunt %s'):format(sequence), 48),
+        json.encode(coords), scenario, math.floor(RSBusiness.clamp(data.durationMs, 2500, 60000))
+    })
+    TriggerClientEvent('rs-businesses:client:refreshNpcs', -1)
+    RSLogs.send('npc_workpoint', 'NPC-werkpunt geplaatst', ('%s · %s · #%s'):format(business.name, role, sequence), RSLogs.playerFields(source), 'info')
+    return true, 'Werkpunt geplaatst.', id
+end)
+
+lib.callback.register('rs-businesses:server:deleteWorkpoint', function(source, id)
+    if not isAdmin(source) then return false, _L('no_access') end
+    local affected = MySQL.update.await('DELETE FROM rs_business_workpoints WHERE id = ?', { tonumber(id) or 0 })
+    if affected < 1 then return false, 'Werkpunt niet gevonden.' end
+    TriggerClientEvent('rs-businesses:client:refreshNpcs', -1)
+    return true, 'Werkpunt verwijderd.'
+end)
+
 lib.callback.register('rs-businesses:server:createBusiness', function(source, data)
     if not isAdmin(source) or type(data) ~= 'table' then return false, _L('no_access') end
     if not Config.BusinessTypes[data.type] then return false, _L('invalid_data') end
