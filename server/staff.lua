@@ -44,6 +44,10 @@ lib.callback.register('rs-businesses:server:hireNpc', function(source, businessI
     if count >= Config.Defaults.maxNpcEmployees then return false, 'Het maximale aantal NPC-medewerkers is bereikt.' end
     if business.balance < definition.purchasePrice then return false, _L('business_insufficient') end
     coords = type(coords) == 'table' and coords or business.coords
+    local proposed, home = RSBusiness.coords(coords), RSBusiness.coords(business.coords)
+    if not proposed or not home or #(proposed - home) > 25.0 then
+        coords = business.coords
+    end
     MySQL.insert.await('INSERT INTO rs_business_npcs (business_id, role, name, model, wage, coords) VALUES (?, ?, ?, ?, ?, ?)', {
         businessId, role, RSBusiness.sanitizeText(name ~= '' and name or definition.label, 40), definition.model, definition.wage, json.encode(coords)
     })

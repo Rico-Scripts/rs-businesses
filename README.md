@@ -6,6 +6,8 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 
 - Winkels, tankstations en gecombineerde locaties
 - Bedrijven kopen met bankgeld
+- Fysiek te-koop-bord met `ox_target` in plaats van een vaste verkoop-NPC
+- Bedrijfstablet voor beheer op afstand door eigenaren en bevoegde medewerkers
 - In-game locatiecreator voor admins
 - Klantenwinkel met fysieke `ox_inventory`-voorraad
 - Eigen verkoopprijzen en server-side prijsgrenzen
@@ -43,15 +45,30 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 1. Plaats de map als `rs-businesses` in je resources.
 2. Importeer `sql/install.sql`. Met `rs_sql_manager` wordt dit bestand automatisch gevonden.
 3. Controleer of alle items uit `Config.Products` in `ox_inventory` bestaan.
-4. Voeg na de dependencies toe:
+4. Voeg dit item toe aan `ox_inventory/data/items.lua`:
+
+```lua
+['business_tablet'] = {
+    label = 'Bedrijfstablet',
+    weight = 650,
+    stack = false,
+    close = true,
+    description = 'Tablet voor het beheer van je bedrijf.',
+    server = { export = 'rs-businesses.businessTablet' }
+},
+```
+
+5. Voeg na de dependencies toe:
 
 ```cfg
 ensure rs-shops
 ensure rs-businesses
 ```
 
-5. Herstart de server.
-6. Gebruik `/businesscreator` als admin om locaties en NPC-werkroutes te plaatsen.
+6. Herstart de server.
+7. Gebruik `/businesscreator` als admin om locaties, te-koop-borden en NPC-werkroutes te plaatsen.
+
+De tablet kan tijdens het testen ook met `/bedrijftablet` worden geopend. De itemnaam, het commando, model en de animatie zijn aanpasbaar in `Config.Tablet`.
 
 ## NPC-werkroutes
 

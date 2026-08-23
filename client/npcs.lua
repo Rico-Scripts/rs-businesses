@@ -1,4 +1,4 @@
-local mainPeds, workerPeds = {}, {}
+local saleSigns, workerPeds = {}, {}
 local workerGeneration = 0
 local cashierBusinesses = {}
 
@@ -135,29 +135,47 @@ local function createPed(data, model, targetOptions, mobile)
     return ped
 end
 
+local function createSaleSign(data, business)
+    local settings = Config.SaleSign or {}
+    local hash = loadModel(settings.model or 'prop_forsale_sign_02')
+    if not hash or not data then return nil end
+
+    local sign = CreateObject(hash, data.x + 0.0, data.y + 0.0, data.z + (settings.zOffset or -1.0), false, true, false)
+    SetEntityAsMissionEntity(sign, true, true)
+    SetEntityHeading(sign, data.w or 0.0)
+    PlaceObjectOnGroundProperly(sign)
+    FreezeEntityPosition(sign, true)
+    SetEntityInvincible(sign, true)
+    exports.ox_target:addLocalEntity(sign, {{
+        name = ('rs_business_sale_%s'):format(business.id),
+        icon = 'fa-solid fa-sign-hanging',
+        label = ('%s kopen ($%s)'):format(business.name, business.purchasePrice),
+        distance = settings.interactionDistance or Config.InteractionDistance,
+        onSelect = function() RSClient.openBusiness(business.id) end
+    }})
+    SetModelAsNoLongerNeeded(hash)
+    return sign
+end
+
 local function businessById(id)
     for i = 1, #RSClient.businesses do
         if tonumber(RSClient.businesses[i].id) == tonumber(id) then return RSClient.businesses[i] end
     end
 end
 
-function RSClient.refreshMainNpcs()
-    removePeds(mainPeds)
+function RSClient.refreshSaleSigns()
+    removePeds(saleSigns)
     for i = 1, #RSClient.businesses do
         local business = RSClient.businesses[i]
-        local npc = business.npc or business.coords
-        if npc and not cashierBusinesses[tonumber(business.id)] then
-            local id = business.id
-            mainPeds[id] = createPed(npc, npc.model or Config.Defaults.npcModel, {{
-                name = ('rs_business_%s'):format(id),
-                icon = 'fa-solid fa-store',
-                label = business.owner and _L('interact') or ('Bedrijf kopen ($%s)'):format(business.purchasePrice),
-                distance = Config.InteractionDistance,
-                onSelect = function() RSClient.openBusiness(id) end
-            }}, false)
+        local signCoords = business.npc or business.coords
+        if not business.owner and signCoords then
+            saleSigns[business.id] = createSaleSign(signCoords, business)
         end
     end
 end
+
+-- Compatibiliteit met de bestaande synchronisatie-aanroepen.
+RSClient.refreshMainNpcs = RSClient.refreshSaleSigns
 
 local function waitAtWorkpoint(ped, point, generation)
     if not DoesEntityExist(ped) or generation ~= workerGeneration then return end
@@ -278,7 +296,7 @@ local function refreshWorkers()
         local worker = workers[i]
         if worker.role == 'cashier' then cashierBusinesses[tonumber(worker.business_id)] = true end
     end
-    RSClient.refreshMainNpcs()
+    RSClient.refreshSaleSigns()
 
     if not Config.NpcAI.enabled then return end
     for i = 1, #workers do
@@ -306,4 +324,10 @@ RegisterNetEvent('rs-businesses:client:refreshNpcs', refreshWorkers)
 CreateThread(function()
     Wait(1500)
     refreshWorkers()
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    removePeds(saleSigns)
+    removePeds(workerPeds)
 end)

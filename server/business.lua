@@ -52,15 +52,22 @@ local function ownerData(source, business)
     }
 end
 
-lib.callback.register('rs-businesses:server:open', function(source, businessId)
+lib.callback.register('rs-businesses:server:open', function(source, businessId, accessMode)
     local business = RSRepo.get(businessId)
     local player = ESX.GetPlayerFromId(source)
     local features = businessFeatures(business)
-    if not business or not player or not RSRepo.near(source, business) then return nil, _L('too_far') end
+    if not business or not player then return nil, _L('invalid_data') end
+    local management = ownerData(source, business)
+    if accessMode == 'tablet' then
+        if not management then return nil, _L('no_access') end
+    elseif not RSRepo.near(source, business) then
+        return nil, _L('too_far')
+    end
     return {
         business = business,
         products = features and features.hasShop and productRows(business.id) or {},
-        management = ownerData(source, business),
+        management = management,
+        accessMode = accessMode == 'tablet' and 'tablet' or 'location',
         playerMoney = player.getAccount(Config.MoneyAccount).money,
         config = {
             businessTypes = Config.BusinessTypes,

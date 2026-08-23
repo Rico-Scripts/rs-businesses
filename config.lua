@@ -16,6 +16,25 @@ Config.RsShopsIntegration = {
     matchDistance = 30.0
 }
 
+Config.SaleSign = {
+    model = 'prop_forsale_sign_02',
+    zOffset = -1.0,
+    interactionDistance = 2.5
+}
+
+Config.Tablet = {
+    item = 'business_tablet',
+    command = 'bedrijftablet', -- Handige fallback en testmogelijkheid.
+    model = 'prop_cs_tablet',
+    animation = {
+        dict = 'amb@code_human_in_bus_passenger_idles@female@tablet@base',
+        clip = 'base',
+        bone = 60309,
+        offset = { x = 0.03, y = 0.002, z = -0.0 },
+        rotation = { x = 10.0, y = 160.0, z = 0.0 }
+    }
+}
+
 Config.Brand = {
     name = 'Rico Scripts',
     shortName = 'RS',

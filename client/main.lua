@@ -1,5 +1,5 @@
 local businesses, spawnedPeds, blips = {}, {}, {}
-local uiOpen, currentBusiness = false, nil
+local uiOpen, currentBusiness, currentAccess = false, nil, nil
 
 RSClient = {
     businesses = businesses,
@@ -11,15 +11,17 @@ local function notify(description, success)
 end
 
 local function closeUi()
-    uiOpen, currentBusiness = false, nil
+    uiOpen, currentBusiness, currentAccess = false, nil, nil
     SetNuiFocus(false, false)
     SendNUIMessage({ action = 'close' })
+    if RSClient.stopTablet then RSClient.stopTablet() end
 end
 
-local function openBusiness(id)
-    local data, errorMessage = lib.callback.await('rs-businesses:server:open', false, id)
+local function openBusiness(id, accessMode)
+    local data, errorMessage = lib.callback.await('rs-businesses:server:open', false, id, accessMode)
     if not data then return notify(errorMessage or 'Bedrijf kon niet worden geopend.', false) end
-    currentBusiness, uiOpen = id, true
+    currentBusiness, currentAccess, uiOpen = id, accessMode, true
+    if accessMode == 'tablet' and RSClient.startTablet then RSClient.startTablet() end
     SetNuiFocus(true, true)
     SendNUIMessage({ action = 'open', payload = data })
 end
@@ -129,7 +131,7 @@ for nuiName, serverName in pairs(callbacks) do
         notify(message or (success and 'Opgeslagen.' or 'Actie mislukt.'), success)
         cb({ success = success == true, message = message, extra = extra })
         if success and currentBusiness then
-            local refreshed = lib.callback.await('rs-businesses:server:open', false, currentBusiness)
+            local refreshed = lib.callback.await('rs-businesses:server:open', false, currentBusiness, currentAccess)
             if refreshed then SendNUIMessage({ action = 'refresh', payload = refreshed }) end
         end
     end)

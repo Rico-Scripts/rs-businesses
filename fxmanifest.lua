@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'Rico Scripts'
 description 'Uitgebreid beheer voor spelerwinkels en tankstations'
-version '1.3.0'
+version '1.4.0'
 
 sql_file 'sql/install.sql'
 rs_sql 'sql/install.sql'
@@ -21,6 +21,7 @@ shared_scripts {
 
 client_scripts {
     'client/main.lua',
+    'client/tablet.lua',
     'client/npcs.lua',
     'client/fuel.lua',
     'client/admin.lua'
@@ -31,6 +32,7 @@ server_scripts {
     'server/logging.lua',
     'server/repository.lua',
     'server/business.lua',
+    'server/tablet.lua',
     'server/fuel.lua',
     'server/orders.lua',
     'server/staff.lua',
