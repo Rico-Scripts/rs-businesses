@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'Rico Scripts'
 description 'Uitgebreid beheer voor spelerwinkels en tankstations'
-version '1.1.1'
+version '1.1.2'
 
 sql_file 'sql/install.sql'
 rs_sql 'sql/install.sql'
