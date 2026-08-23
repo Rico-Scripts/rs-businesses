@@ -18,6 +18,11 @@ MySQL.ready(function()
           CONSTRAINT `fk_rs_workpoint_business` FOREIGN KEY (`business_id`) REFERENCES `rs_businesses` (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ]])
+    MySQL.update.await([[
+        UPDATE rs_business_workpoints
+        SET scenario = 'RS_CASH_REGISTER'
+        WHERE role = 'cashier' AND scenario = 'WORLD_HUMAN_CLIPBOARD'
+    ]])
     RSRepo.reload()
     print(('[rs-businesses] %d bedrijfslocaties geladen; NPC-AI en werkroutes gereed.'):format(#RSRepo.publicList()))
 end)
