@@ -7,8 +7,43 @@ local customWorkAnimations = {
         dict = 'mp_am_hold_up',
         clip = 'purchase_beerbox_shopkeeper',
         flag = 1
+    },
+    RS_STOCK_SHELVES = {
+        dict = 'anim@heists@box_carry@',
+        clip = 'idle',
+        flag = 49,
+        props = {{
+            model = 'hei_prop_heist_box',
+            bone = 28422,
+            offset = { x = 0.0, y = -0.03, z = -0.16 },
+            rotation = { x = 5.0, y = 0.0, z = 0.0 }
+        }}
+    },
+    RS_MANAGER_CHECK = {
+        dict = 'missheistdockssetup1clipboard@base',
+        clip = 'base',
+        flag = 49,
+        props = {
+            {
+                model = 'p_amb_clipboard_01',
+                bone = 18905,
+                offset = { x = 0.10, y = 0.02, z = 0.05 },
+                rotation = { x = 10.0, y = 0.0, z = 0.0 }
+            },
+            {
+                model = 'prop_pencil_01',
+                bone = 58866,
+                offset = { x = 0.11, y = -0.02, z = 0.001 },
+                rotation = { x = -120.0, y = 0.0, z = 0.0 }
+            }
+        }
+    },
+    RS_SECURITY_WATCH = {
+        scenario = 'WORLD_HUMAN_GUARD_STAND'
     }
 }
+
+local managedWorkProps = {}
 
 local looseWorkProps = {
     'p_amb_clipboard_01',
@@ -30,6 +65,42 @@ local function cleanupLooseWorkProps(coords)
     end
 end
 
+local function cleanupManagedWorkProps(ped)
+    local props = managedWorkProps[ped]
+    if not props then return end
+    for i = 1, #props do
+        local object = props[i]
+        if DoesEntityExist(object) then
+            DetachEntity(object, true, true)
+            DeleteObject(object)
+            if DoesEntityExist(object) then DeleteEntity(object) end
+        end
+    end
+    managedWorkProps[ped] = nil
+end
+
+local function createManagedWorkProps(ped, definitions)
+    cleanupManagedWorkProps(ped)
+    if not definitions then return end
+    managedWorkProps[ped] = {}
+    for i = 1, #definitions do
+        local definition = definitions[i]
+        local hash = joaat(definition.model)
+        lib.requestModel(hash, 10000)
+        local coords = GetEntityCoords(ped)
+        local object = CreateObject(hash, coords.x, coords.y, coords.z, false, false, false)
+        local offset, rotation = definition.offset, definition.rotation
+        SetEntityCollision(object, false, false)
+        AttachEntityToEntity(
+            object, ped, GetPedBoneIndex(ped, definition.bone),
+            offset.x, offset.y, offset.z, rotation.x, rotation.y, rotation.z,
+            true, true, false, true, 1, true
+        )
+        managedWorkProps[ped][#managedWorkProps[ped] + 1] = object
+        SetModelAsNoLongerNeeded(hash)
+    end
+end
+
 local function loadModel(model)
     local hash = type(model) == 'number' and model or joaat(model)
     if not IsModelInCdimage(hash) or not IsModelValid(hash) then return nil end
@@ -40,6 +111,7 @@ end
 local function removePeds(collection)
     for _, ped in pairs(collection) do
         if DoesEntityExist(ped) then
+            cleanupManagedWorkProps(ped)
             exports.ox_target:removeLocalEntity(ped)
             DeleteEntity(ped)
         end
@@ -96,8 +168,13 @@ local function waitAtWorkpoint(ped, point, generation)
     local animation = customWorkAnimations[point.scenario]
     if animation then
         cleanupLooseWorkProps(coords)
-        lib.requestAnimDict(animation.dict, 10000)
-        TaskPlayAnim(ped, animation.dict, animation.clip, 3.0, 3.0, duration, animation.flag, 0.0, false, false, false)
+        if animation.scenario then
+            TaskStartScenarioInPlace(ped, animation.scenario, 0, true)
+        else
+            lib.requestAnimDict(animation.dict, 10000)
+            createManagedWorkProps(ped, animation.props)
+            TaskPlayAnim(ped, animation.dict, animation.clip, 3.0, 3.0, duration, animation.flag, 0.0, false, false, false)
+        end
     else
         TaskStartScenarioInPlace(ped, point.scenario, 0, true)
     end
@@ -108,7 +185,8 @@ local function waitAtWorkpoint(ped, point, generation)
     end
     if DoesEntityExist(ped) then
         ClearPedTasks(ped)
-        if animation then RemoveAnimDict(animation.dict) end
+        cleanupManagedWorkProps(ped)
+        if animation and animation.dict then RemoveAnimDict(animation.dict) end
     end
 end
 
@@ -152,6 +230,12 @@ local function fallbackWork(ped, worker, generation)
     end
     if DoesEntityExist(ped) and #(GetEntityCoords(ped) - vec3(home.x, home.y, home.z)) > 8.0 then
         SetEntityCoordsNoOffset(ped, home.x + 0.0, home.y + 0.0, home.z + 0.0, false, false, false)
+    end
+    local roleScenarios = Config.NpcAI.scenarios[worker.role] or {}
+    if roleScenarios[1] then
+        local point = { coords = home, scenario = roleScenarios[1], duration_ms = Config.NpcAI.workDurationMs }
+        walkToWorkpoint(ped, point, generation)
+        waitAtWorkpoint(ped, point, generation)
     end
 end
 
