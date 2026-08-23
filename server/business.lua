@@ -171,7 +171,7 @@ lib.callback.register('rs-businesses:server:settings', function(source, business
     if not business or not RSRepo.permission(source, business.id, 'settings') then return false, _L('no_access') end
     local values = {
         name = RSBusiness.sanitizeText(data.name or business.name, 48),
-        is_open = data.isOpen == true and 1 or 0,
+        is_open = data.isOpen == true,
         fuel_sell_price = RSBusiness.clamp(data.fuelPrice or business.fuel_sell_price, business.fuel_buy_price, 10.0)
     }
     RSRepo.update(business.id, values)
