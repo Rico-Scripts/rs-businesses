@@ -11,6 +11,7 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 - Eigen verkoopprijzen en server-side prijsgrenzen
 - Voorraad bestellen, laten bezorgen of afhalen
 - Brandstof inkopen, verkopen en tankvoorraad beheren
+- Afzonderlijke beheerpanelen per bedrijfstype: winkelvoorraad voor winkels en literprijs, tankvoorraad en brandstofinkoop voor tankstations
 - Tanken via `ox_target` op GTA-brandstofpompen
 - Bedrijfsrekening, belastingen en transactiehistorie
 - Spelerpersoneel met functies en afzonderlijke rechten

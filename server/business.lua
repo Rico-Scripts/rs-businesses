@@ -19,6 +19,10 @@ local function productRows(businessId)
     return result
 end
 
+local function businessFeatures(business)
+    return business and Config.BusinessTypes[business.type] or nil
+end
+
 local function ownerData(source, business)
     local player = ESX.GetPlayerFromId(source)
     local isOwner = RSRepo.isOwner(player, business)
@@ -51,10 +55,11 @@ end
 lib.callback.register('rs-businesses:server:open', function(source, businessId)
     local business = RSRepo.get(businessId)
     local player = ESX.GetPlayerFromId(source)
+    local features = businessFeatures(business)
     if not business or not player or not RSRepo.near(source, business) then return nil, _L('too_far') end
     return {
         business = business,
-        products = productRows(business.id),
+        products = features and features.hasShop and productRows(business.id) or {},
         management = ownerData(source, business),
         playerMoney = player.getAccount(Config.MoneyAccount).money,
         config = {
@@ -93,7 +98,8 @@ end)
 lib.callback.register('rs-businesses:server:checkout', function(source, businessId, cart, payment)
     local business = RSRepo.get(businessId)
     local player = ESX.GetPlayerFromId(source)
-    if not business or not player or not RSRepo.near(source, business) or not business.is_open then return false, 'De winkel is gesloten.' end
+    local features = businessFeatures(business)
+    if not business or not player or not features or not features.hasShop or not RSRepo.near(source, business) or not business.is_open then return false, 'De winkel is gesloten.' end
     if not business.owner_identifier then return false, 'Dit bedrijf heeft nog geen eigenaar.' end
     if type(cart) ~= 'table' or #cart == 0 or #cart > 20 then return false, _L('invalid_data') end
 
@@ -135,7 +141,8 @@ end)
 lib.callback.register('rs-businesses:server:updateProduct', function(source, businessId, item, price)
     local business = RSRepo.get(businessId)
     local product = Config.Products[item]
-    if not business or not product or not RSRepo.permission(source, business.id, 'products') then return false, _L('no_access') end
+    local features = businessFeatures(business)
+    if not business or not features or not features.hasShop or not product or not RSRepo.permission(source, business.id, 'products') then return false, _L('no_access') end
     price = RSBusiness.clamp(price, product.purchasePrice, product.maxPrice)
     MySQL.insert.await([[
         INSERT INTO rs_business_stock (business_id, item, amount, sale_price) VALUES (?, ?, 0, ?)
@@ -168,12 +175,15 @@ end)
 
 lib.callback.register('rs-businesses:server:settings', function(source, businessId, data)
     local business = RSRepo.get(businessId)
-    if not business or not RSRepo.permission(source, business.id, 'settings') then return false, _L('no_access') end
+    local features = businessFeatures(business)
+    if not business or not features or type(data) ~= 'table' or not RSRepo.permission(source, business.id, 'settings') then return false, _L('no_access') end
     local values = {
         name = RSBusiness.sanitizeText(data.name or business.name, 48),
-        is_open = data.isOpen == true,
-        fuel_sell_price = RSBusiness.clamp(data.fuelPrice or business.fuel_sell_price, business.fuel_buy_price, 10.0)
+        is_open = data.isOpen == true
     }
+    if features.hasFuel and data.fuelPrice ~= nil then
+        values.fuel_sell_price = RSBusiness.clamp(data.fuelPrice, business.fuel_buy_price, 10.0)
+    end
     RSRepo.update(business.id, values)
     TriggerClientEvent('rs-businesses:client:sync', -1, RSRepo.publicList())
     return true, _L('settings_saved')
@@ -182,13 +192,20 @@ end)
 lib.callback.register('rs-businesses:server:upgrade', function(source, businessId, key)
     local business, upgrade = RSRepo.get(businessId), Config.Upgrades[key]
     if not business or not upgrade or not RSRepo.permission(source, businessId, 'settings') then return false, _L('no_access') end
+    if business.type == 'fuel' and (key == 'storage_1' or key == 'storage_2' or key == 'express') then return false, 'Deze upgrade is alleen voor winkels.' end
+    if business.type == 'shop' and key == 'fuel_1' then return false, 'Deze upgrade is alleen voor tankstations.' end
     local upgrades = business.upgrades or {}
     if upgrades[key] then return false, 'Deze upgrade is al actief.' end
     if upgrade.requires and not upgrades[upgrade.requires] then return false, 'De vorige upgrade is eerst vereist.' end
     if business.balance < upgrade.price then return false, _L('business_insufficient') end
     business.balance = business.balance - upgrade.price
     upgrades[key] = os.time()
-    RSRepo.update(business.id, { balance = business.balance, upgrades = upgrades })
+    local values = { balance = business.balance, upgrades = upgrades }
+    if upgrade.type == 'fuelCapacity' then
+        business.fuel_capacity = business.fuel_capacity + upgrade.value
+        values.fuel_capacity = business.fuel_capacity
+    end
+    RSRepo.update(business.id, values)
     RSRepo.transaction(business.id, 'upgrade', -upgrade.price, upgrade.label, ESX.GetPlayerFromId(source).identifier)
     return true, ('%s aangeschaft.'):format(upgrade.label)
 end)

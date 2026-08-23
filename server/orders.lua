@@ -6,10 +6,15 @@ local function orderReduction(businessId, business)
     return math.min(reduction, 65)
 end
 
+local function hasShop(business)
+    local definition = business and Config.BusinessTypes[business.type]
+    return definition and definition.hasShop == true
+end
+
 lib.callback.register('rs-businesses:server:createOrder', function(source, businessId, items, mode)
     local business = RSRepo.get(businessId)
     local player = ESX.GetPlayerFromId(source)
-    if not business or not player or not RSRepo.permission(source, businessId, 'orders') then return false, _L('no_access') end
+    if not business or not hasShop(business) or not player or not RSRepo.permission(source, businessId, 'orders') then return false, _L('no_access') end
     if type(items) ~= 'table' or #items == 0 or #items > 30 then return false, _L('invalid_data') end
     local clean, total, units = {}, 0, 0
     for i = 1, #items do
@@ -61,7 +66,7 @@ end
 
 lib.callback.register('rs-businesses:server:receiveOrder', function(source, businessId, orderId)
     local business = RSRepo.get(businessId)
-    if not business or not RSRepo.permission(source, businessId, 'orders') then return false, _L('no_access') end
+    if not business or not hasShop(business) or not RSRepo.permission(source, businessId, 'orders') then return false, _L('no_access') end
     local order = MySQL.single.await('SELECT * FROM rs_business_orders WHERE id = ? AND business_id = ?', { orderId, business.id })
     if not order or (order.status ~= 'ready' and order.status ~= 'ready_pickup') then return false, 'Deze bestelling is nog niet beschikbaar.' end
     local pedCoords = GetEntityCoords(GetPlayerPed(source))
@@ -78,7 +83,8 @@ lib.callback.register('rs-businesses:server:pickupOrders', function(source)
         FROM rs_business_orders o
         INNER JOIN rs_businesses b ON b.id = o.business_id
         LEFT JOIN rs_business_employees e ON e.business_id = b.id AND e.identifier = ?
-        WHERE o.status = 'ready_pickup' AND (b.owner_identifier = ? OR e.identifier IS NOT NULL)
+        WHERE o.status = 'ready_pickup' AND b.type IN ('shop', 'combined')
+          AND (b.owner_identifier = ? OR e.identifier IS NOT NULL)
         ORDER BY o.id DESC
     ]], { player.identifier, player.identifier }) or {}
     return rows

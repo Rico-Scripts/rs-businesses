@@ -29,7 +29,8 @@ end)
 
 lib.callback.register('rs-businesses:server:orderFuel', function(source, businessId, litres)
     local business = RSRepo.get(businessId)
-    if not business or not RSRepo.permission(source, businessId, 'orders') then return false, _L('no_access') end
+    local businessType = business and Config.BusinessTypes[business.type]
+    if not business or not businessType or not businessType.hasFuel or not RSRepo.permission(source, businessId, 'orders') then return false, _L('no_access') end
     litres = RSBusiness.round(tonumber(litres) or 0, 2)
     local available = business.fuel_capacity - business.fuel_stock
     if litres <= 0 or litres > available then return false, ('Er past maximaal %.0f liter in de tank.'):format(available) end
