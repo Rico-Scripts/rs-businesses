@@ -47,6 +47,39 @@ Config.NpcRoles = {
     guard = { label = 'Beveiliger', wage = 190, purchasePrice = 4500, model = 's_m_m_security_01', orderSpeed = 0 }
 }
 
+Config.NpcAI = {
+    enabled = true,
+    walkSpeed = 1.0,
+    arrivalDistance = 0.85,
+    stuckTimeoutMs = 22000,
+    workDurationMs = 9000,
+    idleDurationMs = 2500,
+    teleportWhenStuck = true,
+    disableOutsideOpeningHours = false,
+    scenarios = {
+        cashier = {
+            'WORLD_HUMAN_CLIPBOARD',
+            'WORLD_HUMAN_STAND_IMPATIENT_UPRIGHT',
+            'PROP_HUMAN_ATM'
+        },
+        stocker = {
+            'WORLD_HUMAN_JANITOR',
+            'PROP_HUMAN_BUM_BIN',
+            'WORLD_HUMAN_GARDENER_PLANT'
+        },
+        manager = {
+            'WORLD_HUMAN_CLIPBOARD',
+            'WORLD_HUMAN_STAND_MOBILE',
+            'WORLD_HUMAN_AA_COFFEE'
+        },
+        guard = {
+            'WORLD_HUMAN_GUARD_STAND',
+            'WORLD_HUMAN_STAND_IMPATIENT',
+            'WORLD_HUMAN_BINOCULARS'
+        }
+    }
+}
+
 Config.Upgrades = {
     storage_1 = { label = 'Opslag I', description = '+250 producteenheden', price = 25000, type = 'storage', value = 250 },
     storage_2 = { label = 'Opslag II', description = '+500 producteenheden', price = 55000, type = 'storage', value = 500, requires = 'storage_1' },
