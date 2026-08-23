@@ -63,17 +63,17 @@ Config.NpcAI = {
             'PROP_HUMAN_ATM'
         },
         stocker = {
-            'WORLD_HUMAN_JANITOR',
+            'RS_STOCK_SHELVES',
             'PROP_HUMAN_BUM_BIN',
             'WORLD_HUMAN_GARDENER_PLANT'
         },
         manager = {
-            'WORLD_HUMAN_CLIPBOARD',
+            'RS_MANAGER_CHECK',
             'WORLD_HUMAN_STAND_MOBILE',
             'WORLD_HUMAN_AA_COFFEE'
         },
         guard = {
-            'WORLD_HUMAN_GUARD_STAND',
+            'RS_SECURITY_WATCH',
             'WORLD_HUMAN_STAND_IMPATIENT',
             'WORLD_HUMAN_BINOCULARS'
         }
