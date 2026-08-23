@@ -23,6 +23,18 @@ MySQL.ready(function()
         SET scenario = 'RS_CASH_REGISTER'
         WHERE role = 'cashier' AND scenario = 'WORLD_HUMAN_CLIPBOARD'
     ]])
+    MySQL.update.await([[
+        UPDATE rs_business_workpoints
+        SET scenario = CASE
+            WHEN role = 'stocker' AND scenario = 'WORLD_HUMAN_JANITOR' THEN 'RS_STOCK_SHELVES'
+            WHEN role = 'manager' AND scenario = 'WORLD_HUMAN_CLIPBOARD' THEN 'RS_MANAGER_CHECK'
+            WHEN role = 'guard' AND scenario = 'WORLD_HUMAN_GUARD_STAND' THEN 'RS_SECURITY_WATCH'
+            ELSE scenario
+        END
+        WHERE (role = 'stocker' AND scenario = 'WORLD_HUMAN_JANITOR')
+           OR (role = 'manager' AND scenario = 'WORLD_HUMAN_CLIPBOARD')
+           OR (role = 'guard' AND scenario = 'WORLD_HUMAN_GUARD_STAND')
+    ]])
     RSRepo.reload()
     print(('[rs-businesses] %d bedrijfslocaties geladen; NPC-AI en werkroutes gereed.'):format(#RSRepo.publicList()))
 end)
