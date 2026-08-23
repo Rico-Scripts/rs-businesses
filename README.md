@@ -15,6 +15,9 @@ Uitgebreid ESX Legacy-bedrijfssysteem voor spelerwinkels en tankstations.
 - Bedrijfsrekening, belastingen en transactiehistorie
 - Spelerpersoneel met functies en afzonderlijke rechten
 - NPC-personeel met rollen, loonkosten en orderbonussen
+- Werkende NPC-AI met navmesh-routes, kassawerk, vakkenvullen, managementrondes en beveiligingspatrouilles
+- In-game werkpunteneditor met animatie, kijkrichting, werkduur en automatische routevolgorde
+- Automatische stuck-recovery en vervanging van de standaard kassier door een aangenomen kassamedewerker
 - Bedrijfsupgrades voor opslag, brandstof en logistiek
 - Dynamische NPC's en blips
 - Logging via `rs_discordlogs` met webhookfallback
@@ -42,7 +45,17 @@ ensure rs-businesses
 ```
 
 5. Herstart de server.
-6. Gebruik `/businesscreator` als admin om de eerste locatie te plaatsen.
+6. Gebruik `/businesscreator` als admin om locaties en NPC-werkroutes te plaatsen.
+
+## NPC-werkroutes
+
+Open `/businesscreator` en kies **NPC-werkroutes**. Ga op een werkpunt staan in de gewenste kijkrichting, selecteer het bedrijf, de rol en een werkanimatie en sla het punt op.
+
+- Een kassier blijft op één toegewezen kassapunt.
+- Meerdere kassiers worden over meerdere kassapunten verdeeld.
+- Vakkenvullers, managers en beveiligers lopen alle punten van hun eigen rol op volgorde af.
+- Zonder route loopt een niet-kassier tijdelijk binnen een kleine zone rond zijn aannamepositie.
+- Als een NPC zijn werkpunt niet binnen de ingestelde tijd bereikt, treedt stuck-recovery in werking.
 
 ## Configuratie
 
