@@ -62,8 +62,27 @@ lib.callback.register('rs-businesses:server:removeNpc', function(source, busines
 end)
 
 lib.callback.register('rs-businesses:server:npcs', function()
-    local rows = MySQL.query.await('SELECT id, business_id, role, name, model, coords FROM rs_business_npcs WHERE active = 1') or {}
-    for i = 1, #rows do rows[i].coords = RSBusiness.decode(rows[i].coords) end
+    local rows = MySQL.query.await([[
+        SELECT n.id, n.business_id, n.role, n.name, n.model, n.coords, b.is_open, b.name business_name
+        FROM rs_business_npcs n
+        INNER JOIN rs_businesses b ON b.id = n.business_id
+        WHERE n.active = 1
+    ]]) or {}
+    local points = MySQL.query.await('SELECT id, business_id, role, sequence, label, coords, scenario, duration_ms FROM rs_business_workpoints ORDER BY business_id, role, sequence') or {}
+    local routes = {}
+    for i = 1, #points do
+        local point = points[i]
+        local key = ('%s:%s'):format(point.business_id, point.role)
+        point.coords = RSBusiness.decode(point.coords)
+        point.duration_ms = tonumber(point.duration_ms) or Config.NpcAI.workDurationMs
+        routes[key] = routes[key] or {}
+        routes[key][#routes[key] + 1] = point
+    end
+    for i = 1, #rows do
+        rows[i].coords = RSBusiness.decode(rows[i].coords)
+        rows[i].is_open = rows[i].is_open == 1 or rows[i].is_open == true
+        rows[i].workpoints = routes[('%s:%s'):format(rows[i].business_id, rows[i].role)] or {}
+    end
     return rows
 end)
 
