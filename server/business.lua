@@ -191,4 +191,4 @@ lib.callback.register('rs-businesses:server:upgrade', function(source, businessI
     RSRepo.update(business.id, { balance = business.balance, upgrades = upgrades })
     RSRepo.transaction(business.id, 'upgrade', -upgrade.price, upgrade.label, ESX.GetPlayerFromId(source).identifier)
     return true, ('%s aangeschaft.'):format(upgrade.label)
-end
+end)
